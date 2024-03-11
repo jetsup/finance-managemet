@@ -1,0 +1,16 @@
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    /* default text color */
+    transition: color 0.3s ease-in-out;
+}
+
+.nav-link:hover {
+    color: #ff5733;
+    /* change color on hover */
+}
+
+.nav-link.active {
+    color: #007bff;
+    /* color for the currently selected item */
+}
