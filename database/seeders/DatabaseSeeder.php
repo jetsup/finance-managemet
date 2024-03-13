@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
 class DatabaseSeeder extends Seeder
 {
     // set this variable to `false` if you don't want to add dummy data to the database
-    const SEED_DATA = true;
+    const SEED_DATA = false;
 
     /**
      * Seed the application's database.
@@ -147,7 +147,7 @@ class DatabaseSeeder extends Seeder
             BankAccounts::create(["account_number" => "8765432109", "account_name" => "TANZANIA ELITES", "bank_name" => "BANK OF TANZANIA"]);
             BankAccounts::create(["account_number" => "7654321098", "account_name" => "UGANDA HIGH", "bank_name" => "BANK OF UGANDA"]);
         }
-        
+
         // create sample transaction types --sql
         $this->command->info('Creating transaction types.................');
         TransactionTypes::create(["transaction_type" => "INCOME"]);

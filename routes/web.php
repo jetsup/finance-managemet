@@ -51,23 +51,23 @@ Route::get('/', function () {
     }
 })->name("home");
 
-Route::get("about-us", function() {
+Route::get("about-us", function () {
     return view("about-us");
 });
 
-Route::get("contact-us", function() {
+Route::get("contact-us", function () {
     return view("contact-us");
 });
 
-Route::get("career", function() {
+Route::get("career", function () {
     return view("career");
 });
 
-Route::get("services", function() {
+Route::get("services", function () {
     return view("services");
 });
 
-Route::get("terms-of-service", function() {
+Route::get("terms-of-service", function () {
     return view("terms-of-service");
 });
 
@@ -83,9 +83,10 @@ Route::get('profile', function () {
 Route::get("notifications", function () {
     $results = EmployeeMessages::where("for", "=", auth()->user()->id, "or")
         // ->where("for", "=", 0) /*FIXME: for 0 is a notification tailered for every employee*/
-    ->where("from", "!=", auth()->user()->id)->where("deleted", "=", 0)->orderBy("created_at", "desc")->get();
-    if(auth()->user()->account_type_id == 1) {
-        return view("admin/notifications", ["messages" => $results]);
+        ->where("from", "!=", auth()->user()->id)->where("deleted", "=", 0)->orderBy("created_at", "desc")->get();
+    // dd($results);
+    if (auth()->user()->account_type_id == 1) {
+        return view("admin/notifications", ["messages" => $results, "notifications" => count($results)/*FIXME*/]);
     } else {
         return view("user/notifications", ["messages" => $results]);
     }
@@ -137,9 +138,13 @@ Route::post("reports/generate", function () {
     $transactionType = getTransactionType($typeID);
     $pdf = Pdf::loadView("admin/print-reports", ["transactions" => $transactions, "transaction_types" => getTransactionTypes(), "transaction_type" => $transactionType, "transaction_type_id" => $typeID, "from" => $startDate, "to" => $endDate]);
     $pdf->setPaper('A4', 'landscape');
-    Reports::create(["generated_by" => auth()->user()->id, "from" => $startDate, "to" => $endDate, "transaction_type_id" => $typeID]);
     // return view("admin/print-reports", ["transactions" => $transactions, "transaction_types" => getTransactionTypes(), "notifications" => getNotificationsCount(), "transaction_type" => $transactionType, "transaction_type_id" => $typeID, "from" => $startDate, "to" => $endDate]);
-    return $pdf->download('report.pdf');
+    try {
+        Reports::create(["generated_by" => auth()->user()->id, "from" => $startDate, "to" => $endDate, "transaction_type_id" => $typeID]);
+        return $pdf->download('report.pdf');
+    } catch (\Throwable $th) {
+        return redirect()->back()->with('error', $th->getMessage());
+    }
 })->middleware("auth");
 
 Route::get("reports/history", function () {
@@ -221,22 +226,25 @@ Route::post("employees/create", function () {
 })->middleware("auth");
 
 // DARAJA API (M-PESA Integrations)
-Route::get("employees/payment", function() {
+Route::get("employees/payment", function () {
     // list employees with an option to pay them
     $employees = Employees::get();
     $payments = EmployeePayments::where("transaction_id", "=", null)->get(["id", "employee_id", "due_amount", "total_received", "transaction_id"]);
-    
+
     // Create an associative array to store payments data using employee_id as the key
     $paymentsData = [];
+    // dd($payments);
     foreach ($payments as $payment) {
         $paymentsData[$payment->employee_id] = [
             "id" => $payment->id,
             "due_amount" => $payment->due_amount,
             "total_received" => $payment->total_received,
             "transaction_id" => $payment->transaction_id,
-            "last_paid_date" => EmployeePayments::where("employee_id", "=", $payment->employee_id)->orderBy("created_at")->get("created_at")->pluck("created_at")[0],//Transactions::where("id", "=", $payment->transaction_id)->get(["transaction_date"])->pluck("transaction_date")[0],
+            "last_paid_date" => EmployeePayments::where("employee_id", "=", $payment->employee_id)
+                ->orderBy("created_at")->get("created_at")->pluck("created_at")[0], //Transactions::where("id", "=", $payment->transaction_id)->get(["transaction_date"])->pluck("transaction_date")[0],
         ];
     }
+    // dd($paymentsData);
     // Add payments data to each employee, a user with no payment data will be assigned null
     foreach ($employees as $employee) {
         $employee->payments = $paymentsData[$employee->id] ?? null;
@@ -244,18 +252,20 @@ Route::get("employees/payment", function() {
     return view("admin/employees-manage", ["notifications" => getNotificationsCount(), "employees" => $employees, "payment" => 1]);
 })->middleware("auth");
 
-Route::post("employee/pay/{employeeID}/{paymentID}/{amount}", function($employeeID, $paymentID, $amount) {
+Route::post("employee/pay/{employeeID}/{paymentID}/{amount}", function ($employeeID, $paymentID, $amount) {
     // make a trigger that will execute at end month so that payments can be processed
     // create a new transaction then update the employee_payments
     $userID = Employees::where("id", "=", $employeeID)->get("user_id")->pluck("user_id")[0];
     $employeePhone = cleanPhoneNumber(User::where("id", "=", $userID)->get("phone")->pluck("phone")[0]);
-    $transactionCode = "CODE";// from M-Pesa endpoint
-    $transaction = Transactions::create(["transaction_date" => now(),
+    $transactionCode = "CODE"; // from M-Pesa endpoint
+    $transaction = Transactions::create([
+        "transaction_date" => now(),
         "transaction_type_id" => 2 /*EXPENSE*/,
         "from_account_id" => 1/*organisations account*/,
         "to_account_id" => 2, // test account actually a mobile phone number
         "amount" => $amount,
-        "transaction_code" => $transactionCode]);
+        "transaction_code" => $transactionCode
+    ]);
     $totalPayments = EmployeePayments::where("id", "=", $paymentID)->get("total_received")->pluck("total_received")[0] + $amount;
     EmployeePayments::where("id", "=", $paymentID)->update(["transaction_id" => $transaction->id, "total_received" => $totalPayments]);
     return back();

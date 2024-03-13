@@ -169,7 +169,7 @@
                         @auth
                             {{-- if admin and in managerial level --}}
                             @if(auth()->user()->account_type_id == 1)
-                                <li class="{{ Request::is('complains') ? 'active' : '' }}"><a class="fa fa-comments-o" href="/complains/view"> View Complain</a></li>
+                                <li class="{{ Request::is('complains') ? 'active' : '' }}"><a class="fa fa-comments-o" href="/complains"> View Complain</a></li>
                             @endif
                         @endauth
                         {{-- <li class="{{ Request::is('complains') ? 'active' : '' }}"><a class="fa fa-eye" href="/complains"> View Complain</a></li> --}}

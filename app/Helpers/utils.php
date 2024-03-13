@@ -45,7 +45,8 @@ function getNotificationsCount()
     return count($results);
 }
 
-function cleanPhoneNumber(string $phone){
+function cleanPhoneNumber(string $phone)
+{
     return str_replace(["-", "."], "", $phone);
 }
 
@@ -87,14 +88,20 @@ function getEmployeeTypeById($id)
 
 function firstTransactionDate()
 {
-    $date = Transactions::orderBy("transaction_date", "asc")->get("transaction_date")->pluck("transaction_date")[0];
-    $date = explode(" ", Str($date))[0];
+    $date = Transactions::orderBy("transaction_date", "asc")->get("transaction_date"); //->pluck("transaction_date")[0];
+    if (count($date)) {
+        $date = $date->pluck("transaction_date")[0];
+        $date = explode(" ", Str($date))[0];
+    }
     return $date;
 }
 function lastTransactionDate()
 {
-    $date = Transactions::orderBy("transaction_date", "desc")->get("transaction_date")->pluck("transaction_date")[0];
-    $date = explode(" ", Str($date))[0];
+    $date = Transactions::orderBy("transaction_date", "desc")->get("transaction_date");
+    if (count($date)) {
+        $date = $date->pluck("transaction_date")[0];
+        $date = explode(" ", Str($date))[0];
+    }
     return $date;
 }
 
@@ -106,7 +113,10 @@ function getTransactionTypes()
 
 function getTransactionType(int $typeID)
 {
-    $type = TransactionTypes::where("id", "=", $typeID)->get(["transaction_type"])->pluck("transaction_type")[0];
+    $type = TransactionTypes::where("id", "=", $typeID)->get(["transaction_type"]);
+    if (count($type)) {
+        $type = $type->pluck("transaction_type")[0];
+    }
     return $type;
 }
 function extractDate($dateTime)

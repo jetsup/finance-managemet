@@ -3,7 +3,7 @@
     <body>
         <!--header start-->
         <!--main content start-->
-        <section id="main-content" style=" margin-right:110px;">
+        <section id="main-content" style=" margin-right:120px;">
             <section class="wrapper">
                 <div class="row">
                     <div class="col-lg-12">
@@ -73,34 +73,58 @@
                                                 <td>{{ $employee->employee_number }}</td>
                                                 <td>{{ getEmployeeTypeById($employee->employee_type_id) }}</td>
                                                 <td>{{ getEmployeeGender($employee->user_id) }}</td>
-
+                                                {{-- {{ dd($employee, $payment) }} --}}
                                                 @if ($payment == 1)
-                                                    <td>KES. {{ formatMoney($employee->payments['total_received']) }}
-                                                    </td>
+                                                    @if ($employee->payments == null)
+                                                        <td>KES. 0</td>
+                                                    @else
+                                                        <td>KES.
+                                                            {{ formatMoney($employee->payments['total_received']) }}
+                                                        </td>
+                                                    @endif
                                                 @else
                                                     <td>{{ getUserUsername($employee->user_id) }}</td>
                                                 @endif
 
                                                 @if ($payment == 1)
-                                                    <td>KES. {{ formatMoney($employee->payments['due_amount']) }}</td>
+                                                    @if ($employee->payments == null)
+                                                        <td>KES. 0</td>
+                                                    @else
+                                                        <td>KES. {{ formatMoney($employee->payments['due_amount']) }}
+                                                        </td>
+                                                    @endif
                                                 @else
                                                     <td>{{ getDepartmentName($employee->department_id) }}</td>
                                                 @endif
 
                                                 @if ($payment == 1)
-                                                    <td>{{ extractDate($employee->payments['last_paid_date']) }}</td>
+                                                    @if ($employee->payments == null)
+                                                        <td>KES. 0</td>
+                                                    @else
+                                                        <td>{{ extractDate($employee->payments['last_paid_date']) }}
+                                                        </td>
+                                                    @endif
                                                 @else
                                                     <td>{{ extractDate($employee->created_at) }}</td>
                                                 @endif
                                                 <td>
                                                     @if ($payment == 1)
                                                         <form
-                                                            action="{{ '/employee/pay/' . $employee->id . '/' . $employee->payments['id'] . '/' . $employee->payments['due_amount'] }}"
+                                                            @if ($employee->payments == null) action="{{ '/employee/pay/' . $employee->id . '/0/0' }}"
+                                                        @else
+                                                            action="{{ '/employee/pay/' . $employee->id . '/' . $employee->payments['id'] . '/' . $employee->payments['due_amount'] }}" @endif
                                                             method="POST">
                                                             @csrf
-                                                            <button type="submit" class="btn btn-success btn-sm">
-                                                                <i class="fa fa-dollar"></i> Pay
-                                                            </button>
+                                                            @if ($employee->payments == null)
+                                                                <button type="submit" class="btn btn-success btn-sm"
+                                                                    disabled>
+                                                                    <i class="fa fa-dollar"></i> Pay
+                                                                </button>
+                                                            @else
+                                                                <button type="submit" class="btn btn-success btn-sm">
+                                                                    <i class="fa fa-dollar"></i> Pay
+                                                                </button>
+                                                            @endif
                                                         </form>
                                                     @else
                                                         <form action="{{ '/employee/delete/' . $employee->id }}"
