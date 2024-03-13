@@ -138,7 +138,7 @@ Route::post("reports/generate", function () {
     $transactionType = getTransactionType($typeID);
     $pdf = Pdf::loadView("admin/print-reports", ["transactions" => $transactions, "transaction_types" => getTransactionTypes(), "transaction_type" => $transactionType, "transaction_type_id" => $typeID, "from" => $startDate, "to" => $endDate]);
     $pdf->setPaper('A4', 'landscape');
-    // return view("admin/print-reports", ["transactions" => $transactions, "transaction_types" => getTransactionTypes(), "notifications" => getNotificationsCount(), "transaction_type" => $transactionType, "transaction_type_id" => $typeID, "from" => $startDate, "to" => $endDate]);
+    return view("admin/print-reports", ["transactions" => $transactions, "transaction_types" => getTransactionTypes(), "notifications" => getNotificationsCount(), "transaction_type" => $transactionType, "transaction_type_id" => $typeID, "from" => $startDate, "to" => $endDate]);
     try {
         Reports::create(["generated_by" => auth()->user()->id, "from" => $startDate, "to" => $endDate, "transaction_type_id" => $typeID]);
         return $pdf->download('report.pdf');
